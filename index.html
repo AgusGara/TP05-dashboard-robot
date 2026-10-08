@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Monitor Unitree - Dashboard web</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #eef1f4; --panel: #ffffff; --ink: #1c2530; --muted: #66727f; --line: #d9dfe5;
+    --ok: #2e9e5b; --warn: #e0a100; --hot: #d64545; --accent: #1f5f8b;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 15px/1.4 "Segoe UI", system-ui, sans-serif; }
+  header { display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+           padding: 14px 20px; background: var(--ink); color: #fff; }
+  header h1 { font-size: 18px; margin: 0 auto 0 0; font-weight: 600; }
+  header input { width: 170px; padding: 6px 8px; border-radius: 4px; border: 0; }
+  button { padding: 7px 14px; border: 0; border-radius: 4px; cursor: pointer;
+           background: var(--accent); color: #fff; font-size: 14px; }
+  button:hover { filter: brightness(1.15); }
+  button:focus-visible, input:focus-visible { outline: 3px solid #8fc7ee; outline-offset: 2px; }
+  #estado { font-size: 13px; padding: 4px 10px; border-radius: 12px; background: #555; }
+  #estado.on { background: var(--ok); } #estado.off { background: var(--hot); }
+  main { display: grid; gap: 16px; padding: 16px 20px;
+         grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; }
+  section.ancha { grid-column: 1 / -1; }
+  h2 { font-size: 15px; margin: 0 0 10px; }
+  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  th, td { padding: 5px 8px; text-align: right; border-bottom: 1px solid var(--line); }
+  th:first-child, td:first-child { text-align: left; }
+  th { color: var(--muted); font-weight: 500; }
+  .temp { display: inline-flex; align-items: center; gap: 6px; }
+  .dot { width: 11px; height: 11px; border-radius: 50%; background: var(--ok); display: inline-block; }
+  .dot.warn { background: var(--warn); } .dot.hot { background: var(--hot); }
+  .nums { display: flex; gap: 12px; margin-bottom: 10px; }
+  .num { flex: 1; background: var(--bg); border-radius: 4px; padding: 8px; text-align: center; }
+  .num b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; }
+  .num span { color: var(--muted); font-size: 12px; }
+  .barra { height: 16px; background: var(--bg); border-radius: 8px; overflow: hidden; margin: 6px 0 12px; }
+  .barra div { height: 100%; background: var(--ok); width: 0; transition: width .3s; }
+  .celdas { display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 6px; }
+  .celda { background: var(--bg); border-radius: 4px; padding: 5px; text-align: center; font-size: 13px; }
+  .celda span { display: block; color: var(--muted); font-size: 11px; }
+  .patas { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 320px; margin: 0 auto; }
+  .pata { padding: 18px 8px; text-align: center; border-radius: 6px; background: #c9d0d7; color: #4b5560; font-weight: 600; }
+  .pata.apoyada { background: var(--ok); color: #fff; }
+  .pata small { display: block; font-weight: 400; }
+  .chartbox { position: relative; height: 230px; }
+  .vacio { color: var(--muted); }
+  #msg { font-size: 13px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Monitor Unitree (versión web)</h1>
+  <label>Servidor <input id="servidor" value="localhost:8001"></label>
+  <button id="btnConectar">Conectar</button>
+  <span id="estado" class="off">Desconectado</span>
+  <button id="btnCapturar">Capturar muestra</button>
+  <button id="btnCsv">Exportar CSV</button>
+  <span id="msg">Muestras: 0</span>
+</header>
+
+<main>
+  <section class="ancha">
+    <h2 id="tituloMotores">Motores</h2>
+    <table>
+      <thead><tr><th>Motor</th><th>Temperatura</th><th>Ángulo (°)</th><th>Velocidad (rad/s)</th><th>Torque (N·m)</th></tr></thead>
+      <tbody id="tbodyMotores"><tr><td colspan="5" class="vacio">Esperando datos…</td></tr></tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>IMU</h2>
+    <div class="nums">
+      <div class="num"><b id="roll">–</b><span>Roll (°)</span></div>
+      <div class="num"><b id="pitch">–</b><span>Pitch (°)</span></div>
+      <div class="num"><b id="yaw">–</b><span>Yaw (°)</span></div>
+    </div>
+    <div class="chartbox"><canvas id="chartImu"></canvas></div>
+  </section>
+
+  <section>
+    <h2>Batería (BMS)</h2>
+    <div class="nums">
+      <div class="num"><b id="soc">–</b><span>Carga (%)</span></div>
+      <div class="num"><b id="corriente">–</b><span>Corriente (mA)</span></div>
+      <div class="num"><b id="bmsTemp">–</b><span>Temperatura (°C)</span></div>
+    </div>
+    <div class="barra"><div id="barraSoc"></div></div>
+    <div class="celdas" id="celdas"><span class="vacio">Sin datos de celdas</span></div>
+  </section>
+
+  <section>
+    <h2>Fuerzas por pata</h2>
+    <div class="patas" id="patas">
+      <div class="pata" id="pata-FL">FL<small>delantera izq.</small></div>
+      <div class="pata" id="pata-FR">FR<small>delantera der.</small></div>
+      <div class="pata" id="pata-RL">RL<small>trasera izq.</small></div>
+      <div class="pata" id="pata-RR">RR<small>trasera der.</small></div>
+    </div>
+    <p id="avisoPatas" class="vacio" hidden>Este robot no reporta patas.</p>
+  </section>
+</main>
+
+<script>
+const MAX_PUNTOS = 60;       // muestras del gráfico IMU
+const POLLING_MS = 500;      // polling de respaldo si el WebSocket no está activo
+
+let ws = null, pollingId = null, reconectarId = null;
+let ultima = null;           // último JSON recibido
+const capturas = [];         // muestras guardadas con "Capturar muestra"
+
+const $ = (id) => document.getElementById(id);
+
+/* ---------- Gráfico IMU ---------- */
+const chart = new Chart($("chartImu"), {
+  type: "line",
+  data: { labels: [], datasets: [
+    { label: "Roll",  data: [], borderColor: "#d64545", pointRadius: 0, borderWidth: 2 },
+    { label: "Pitch", data: [], borderColor: "#1f5f8b", pointRadius: 0, borderWidth: 2 },
+    { label: "Yaw",   data: [], borderColor: "#2e9e5b", pointRadius: 0, borderWidth: 2 },
+  ]},
+  options: { animation: false, maintainAspectRatio: false,
+    scales: { x: { display: false }, y: { title: { display: true, text: "grados" } } } }
+});
+
+/* ---------- Conexión ---------- */
+function setEstado(texto, clase) { $("estado").textContent = texto; $("estado").className = clase; }
+
+function conectar() {
+  detener();
+  const host = $("servidor").value.trim();
+  setEstado("Conectando…", "");
+  try {
+    ws = new WebSocket("ws://" + host + "/ws");
+  } catch (e) { iniciarPolling(host); return; }
+  ws.onopen = () => { setEstado("En vivo (WebSocket)", "on"); pararPolling(); };
+  ws.onmessage = (e) => procesar(JSON.parse(e.data));
+  ws.onclose = () => {
+    setEstado("Reconectando…", "off");
+    iniciarPolling(host);                       // mientras tanto, polling
+    reconectarId = setTimeout(conectar, 2000);  // y reintento el WebSocket
+  };
+  ws.onerror = () => ws.close();
+}
+
+function iniciarPolling(host) {
+  if (pollingId) return;
+  pollingId = setInterval(async () => {
+    try {
+      const r = await fetch("http://" + host + "/telemetria");
+      procesar(await r.json());
+      setEstado("En vivo (polling)", "on");
+    } catch (e) { setEstado("Sin conexión con el servidor", "off"); }
+  }, POLLING_MS);
+}
+function pararPolling() { clearInterval(pollingId); pollingId = null; }
+function detener() {
+  clearTimeout(reconectarId);
+  pararPolling();
+  if (ws) { ws.onclose = null; ws.close(); ws = null; }
+}
+
+/* ---------- Pintar datos ---------- */
+function claseTemp(t) { return t < 40 ? "" : (t <= 60 ? "warn" : "hot"); }
+const f = (n, d = 2) => Number(n).toFixed(d);
+
+function procesar(t) {
+  ultima = t;
+  pintarMotores(t);
+  pintarImu(t.imu);
+  pintarBms(t.bms);
+  pintarPatas(t.fuerzas);
+}
+
+function pintarMotores(t) {
+  $("tituloMotores").textContent = "Motores – " + t.modelo.toUpperCase() + " (" + t.motores.length + ")";
+  $("tbodyMotores").innerHTML = t.motores.map((m) =>
+    `<tr><td>${m.nombre}</td>
+     <td><span class="temp"><i class="dot ${claseTemp(m.temperatura)}"></i>${f(m.temperatura, 1)} °C</span></td>
+     <td>${f(m.angulo)}</td><td>${f(m.velocidad, 3)}</td><td>${f(m.torque)}</td></tr>`
+  ).join("");
+}
+
+function pintarImu(i) {
+  $("roll").textContent = f(i.roll); $("pitch").textContent = f(i.pitch); $("yaw").textContent = f(i.yaw);
+  chart.data.labels.push("");
+  [i.roll, i.pitch, i.yaw].forEach((v, k) => chart.data.datasets[k].data.push(v));
+  if (chart.data.labels.length > MAX_PUNTOS) {
+    chart.data.labels.shift();
+    chart.data.datasets.forEach((d) => d.data.shift());
+  }
+  chart.update("none");
+}
+
+function pintarBms(b) {
+  $("soc").textContent = b.soc; $("corriente").textContent = b.corriente; $("bmsTemp").textContent = f(b.temperatura, 1);
+  $("barraSoc").style.width = b.soc + "%";
+  $("barraSoc").style.background = b.soc > 40 ? "var(--ok)" : (b.soc > 20 ? "var(--warn)" : "var(--hot)");
+  $("celdas").innerHTML = b.celdas && b.celdas.length
+    ? b.celdas.map((v, k) => `<div class="celda"><span>Celda ${k + 1}</span>${f(v, 3)} V</div>`).join("")
+    : '<span class="vacio">Sin datos de celdas</span>';
+}
+
+function pintarPatas(fz) {
+  const hay = fz && Object.keys(fz).length > 0;
+  $("patas").hidden = !hay; $("avisoPatas").hidden = hay;
+  if (!hay) return;
+  for (const p of ["FR", "FL", "RR", "RL"]) $("pata-" + p).classList.toggle("apoyada", fz[p] === 1);
+}
+
+/* ---------- Capturar y exportar CSV ---------- */
+function capturar() {
+  if (!ultima) { $("msg").textContent = "Todavía no hay datos para capturar"; return; }
+  capturas.push(JSON.parse(JSON.stringify(ultima)));   // copia del estado actual
+  $("msg").textContent = "Muestras: " + capturas.length;
+}
+
+function exportarCsv() {
+  if (!capturas.length) { $("msg").textContent = "Capturá al menos una muestra"; return; }
+  const base = ["ts", "modelo", "roll", "pitch", "yaw", "soc", "corriente", "bms_temp", "FR", "FL", "RR", "RL"];
+  const nombres = capturas[0].motores.map((m) => m.nombre);
+  const cab = base.concat(nombres.flatMap((n) => [n + "_angulo", n + "_velocidad", n + "_torque", n + "_temp"]));
+  const filas = capturas.map((c) => {
+    const fz = c.fuerzas || {};
+    const fila = [c.ts, c.modelo, c.imu.roll, c.imu.pitch, c.imu.yaw, c.bms.soc, c.bms.corriente, c.bms.temperatura,
+                  fz.FR ?? "", fz.FL ?? "", fz.RR ?? "", fz.RL ?? ""];
+    c.motores.forEach((m) => fila.push(m.angulo, m.velocidad, m.torque, m.temperatura));
+    return fila.join(",");
+  });
+  const blob = new Blob([[cab.join(",")].concat(filas).join("\n")], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "telemetria_" + new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-") + ".csv";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+$("btnConectar").onclick = conectar;
+$("btnCapturar").onclick = capturar;
+$("btnCsv").onclick = exportarCsv;
+conectar();
+</script>
+</body>
+</html>

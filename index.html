@@ -207,7 +207,7 @@ function pintarBms(b) {
 }
 
 function pintarPatas(fz) {
-  const hay = fz && Object.keys(fz).length > 0;
+  const hay = fz && Object.keys(fz).length > 0 && !/g1/i.test(ultima.modelo);
   $("patas").hidden = !hay; $("avisoPatas").hidden = hay;
   if (!hay) return;
   for (const p of ["FR", "FL", "RR", "RL"]) $("pata-" + p).classList.toggle("apoyada", fz[p] === 1);

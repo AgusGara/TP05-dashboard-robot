@@ -3,247 +3,298 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Monitor Unitree - Dashboard web</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<style>
-  :root {
-    --bg: #eef1f4; --panel: #ffffff; --ink: #1c2530; --muted: #66727f; --line: #d9dfe5;
-    --ok: #2e9e5b; --warn: #e0a100; --hot: #d64545; --accent: #1f5f8b;
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--ink);
-         font: 15px/1.4 "Segoe UI", system-ui, sans-serif; }
-  header { display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
-           padding: 14px 20px; background: var(--ink); color: #fff; }
-  header h1 { font-size: 18px; margin: 0 auto 0 0; font-weight: 600; }
-  header input { width: 170px; padding: 6px 8px; border-radius: 4px; border: 0; }
-  button { padding: 7px 14px; border: 0; border-radius: 4px; cursor: pointer;
-           background: var(--accent); color: #fff; font-size: 14px; }
-  button:hover { filter: brightness(1.15); }
-  button:focus-visible, input:focus-visible { outline: 3px solid #8fc7ee; outline-offset: 2px; }
-  #estado { font-size: 13px; padding: 4px 10px; border-radius: 12px; background: #555; }
-  #estado.on { background: var(--ok); } #estado.off { background: var(--hot); }
-  main { display: grid; gap: 16px; padding: 16px 20px;
-         grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); }
-  section { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; }
-  section.ancha { grid-column: 1 / -1; }
-  h2 { font-size: 15px; margin: 0 0 10px; }
-  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-  th, td { padding: 5px 8px; text-align: right; border-bottom: 1px solid var(--line); }
-  th:first-child, td:first-child { text-align: left; }
-  th { color: var(--muted); font-weight: 500; }
-  .temp { display: inline-flex; align-items: center; gap: 6px; }
-  .dot { width: 11px; height: 11px; border-radius: 50%; background: var(--ok); display: inline-block; }
-  .dot.warn { background: var(--warn); } .dot.hot { background: var(--hot); }
-  .nums { display: flex; gap: 12px; margin-bottom: 10px; }
-  .num { flex: 1; background: var(--bg); border-radius: 4px; padding: 8px; text-align: center; }
-  .num b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; }
-  .num span { color: var(--muted); font-size: 12px; }
-  .barra { height: 16px; background: var(--bg); border-radius: 8px; overflow: hidden; margin: 6px 0 12px; }
-  .barra div { height: 100%; background: var(--ok); width: 0; transition: width .3s; }
-  .celdas { display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 6px; }
-  .celda { background: var(--bg); border-radius: 4px; padding: 5px; text-align: center; font-size: 13px; }
-  .celda span { display: block; color: var(--muted); font-size: 11px; }
-  .patas { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 320px; margin: 0 auto; }
-  .pata { padding: 18px 8px; text-align: center; border-radius: 6px; background: #c9d0d7; color: #4b5560; font-weight: 600; }
-  .pata.apoyada { background: var(--ok); color: #fff; }
-  .pata small { display: block; font-weight: 400; }
-  .chartbox { position: relative; height: 230px; }
-  .vacio { color: var(--muted); }
-  #msg { font-size: 13px; }
-</style>
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="Dashboard web de telemetría para robots Unitree Go2 y G1 (TP05, Desarrollo de Aplicaciones II)">
+<title>Telemetría Unitree</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231f6feb'/%3E%3Cpath d='M6 19h5l3-8 4 12 3-7h5' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/dashboard.css">
+<script>
+  // Aplica el tema guardado antes del primer pintado (evita el parpadeo).
+  try { const t = localStorage.getItem("tema"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+</script>
 </head>
 <body>
-<header>
-  <h1>Monitor Unitree (versión web)</h1>
-  <label>Servidor <input id="servidor" value="localhost:8001"></label>
-  <button id="btnConectar">Conectar</button>
-  <span id="estado" class="off">Desconectado</span>
-  <button id="btnCapturar">Capturar muestra</button>
-  <button id="btnCsv">Exportar CSV</button>
-  <span id="msg">Muestras: 0</span>
+<a class="saltar" href="#principal">Saltar al contenido</a>
+
+<header class="barra">
+  <div class="marca">
+    <svg class="marca__logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8"/><path d="M6 19h5l3-8 4 12 3-7h5"/></svg>
+    <div class="marca__texto">
+      <h1 class="marca__titulo">Telemetría Unitree</h1>
+      <p class="marca__robot">
+        <span id="robotNombre">Sin robot</span>
+        <span class="marca__detalle" id="robotDetalle"></span>
+        <span class="chip" id="robotModo" hidden></span>
+      </p>
+    </div>
+  </div>
+
+  <form class="conexion" id="formConexion" autocomplete="off" novalidate>
+    <label class="conexion__label" for="servidor">Servidor</label>
+    <input class="campo" id="servidor" name="servidor" type="text" spellcheck="false" autocapitalize="off"
+           placeholder="10.0.0.5:8001" title="IP y puerto que muestra INICIAR_TP05 (ej. 10.0.0.5:8001)">
+    <button class="btn" id="btnConectar" type="submit">Conectar</button>
+  </form>
+
+  <div class="estado" id="estado" data-fase="detenido">
+    <span class="estado__punto" aria-hidden="true"></span>
+    <span class="estado__texto" id="estadoTexto" role="status">Desconectado</span>
+    <span class="estado__detalle" id="estadoDetalle"></span>
+  </div>
+
+  <button class="btn btn--icono" id="btnTema" type="button" aria-label="Cambiar tema" title="Tema claro / oscuro">
+    <svg class="icono icono-luna" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
+    <svg class="icono icono-sol" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+  </button>
 </header>
 
-<main>
-  <section class="ancha">
-    <h2 id="tituloMotores">Motores</h2>
-    <table>
-      <thead><tr><th>Motor</th><th>Temperatura</th><th>Ángulo (°)</th><th>Velocidad (rad/s)</th><th>Torque (N·m)</th></tr></thead>
-      <tbody id="tbodyMotores"><tr><td colspan="5" class="vacio">Esperando datos…</td></tr></tbody>
-    </table>
-  </section>
+<div class="contenedor">
+  <section class="franja" aria-label="Resumen">
+    <dl class="kpis">
+      <div class="kpi">
+        <dt>Actividad</dt>
+        <dd class="kpi__valor kpi__actividad" id="kpiActividad"><i class="kpi__punto" aria-hidden="true"></i><span id="kpiActividadTexto">–</span></dd>
+        <dd class="kpi__sub">velocidad media de motores</dd>
+      </div>
+      <div class="kpi">
+        <dt>Temp. máx. motores</dt>
+        <dd class="kpi__valor kpi__temp" id="kpiTemp" data-nivel="sin-dato"><i class="nivel" aria-hidden="true"></i><span id="kpiTempValor">–</span></dd>
+        <dd class="kpi__sub" id="kpiTempSub"></dd>
+      </div>
+      <div class="kpi">
+        <dt>Torque máx.</dt>
+        <dd class="kpi__valor" id="kpiTorque">–</dd>
+        <dd class="kpi__sub" id="kpiTorqueSub"></dd>
+      </div>
+      <div class="kpi">
+        <dt>Batería</dt>
+        <dd class="kpi__valor kpi__bateria" id="kpiBateria" data-nivel="sin-dato">–</dd>
+        <dd class="kpi__sub">carga (SOC)</dd>
+      </div>
+      <div class="kpi">
+        <dt>Contacto</dt>
+        <dd class="kpi__valor" id="kpiContacto">–</dd>
+        <dd class="kpi__sub" id="kpiContactoSub"></dd>
+      </div>
+    </dl>
 
-  <section>
-    <h2>IMU</h2>
-    <div class="nums">
-      <div class="num"><b id="roll">–</b><span>Roll (°)</span></div>
-      <div class="num"><b id="pitch">–</b><span>Pitch (°)</span></div>
-      <div class="num"><b id="yaw">–</b><span>Yaw (°)</span></div>
+    <div class="acciones" role="group" aria-label="Captura de datos">
+      <button class="btn" id="btnPausa" type="button" aria-pressed="false" title="Congela la vista; los datos se siguen recibiendo (P)">
+        <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5v14M15 5v14"/></svg>
+        <span id="btnPausaTexto">Pausar</span>
+      </button>
+      <button class="btn btn--primario" id="btnCapturar" type="button" title="Guarda el estado actual del robot (C)">
+        <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="12" r="3"/></svg>
+        Capturar muestra
+      </button>
+      <button class="btn btn--grabar" id="btnGrabar" type="button" aria-pressed="false" title="Captura cada lectura que llega (R)">
+        <i class="punto-rec" aria-hidden="true"></i>
+        <span id="btnGrabarTexto">Grabar</span>
+      </button>
+      <button class="btn" id="btnCsv" type="button" disabled title="Descarga todas las muestras capturadas">
+        <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>
+        Exportar CSV
+        <span class="contador" id="contadorMuestras" aria-label="muestras capturadas">0</span>
+      </button>
+      <button class="btn btn--fantasma" id="btnDescartar" type="button" disabled title="Vacía las muestras capturadas">Descartar</button>
     </div>
-    <div class="chartbox"><canvas id="chartImu"></canvas></div>
   </section>
 
-  <section>
-    <h2>Batería (BMS)</h2>
-    <div class="nums">
-      <div class="num"><b id="soc">–</b><span>Carga (%)</span></div>
-      <div class="num"><b id="corriente">–</b><span>Corriente (mA)</span></div>
-      <div class="num"><b id="bmsTemp">–</b><span>Temperatura (°C)</span></div>
+  <div class="alerta" id="alerta" data-tipo="info" role="status" hidden>
+    <span class="alerta__icono" aria-hidden="true"></span>
+    <p class="alerta__texto"><strong id="alertaTitulo"></strong> <span id="alertaDetalle"></span></p>
+    <a class="alerta__enlace" id="alertaEnlace" target="_blank" rel="noopener" hidden></a>
+    <button class="btn btn--chico" id="alertaAccion" type="button" hidden></button>
+  </div>
+
+  <main class="grilla" id="principal">
+    <div class="columna">
+      <!-- 1. Panel de motores -->
+      <section class="panel panel--motores" aria-labelledby="tituloMotores">
+        <header class="panel__cabecera">
+          <div>
+            <h2 id="tituloMotores">Motores</h2>
+            <p class="panel__sub" id="subMotores">Esperando datos del servidor…</p>
+          </div>
+          <ul class="leyenda" aria-label="Semáforo de temperatura">
+            <li data-nivel="ok"><i class="nivel" aria-hidden="true"></i>&lt; 40 °C</li>
+            <li data-nivel="warn"><i class="nivel" aria-hidden="true"></i>40–60 °C</li>
+            <li data-nivel="hot"><i class="nivel" aria-hidden="true"></i>&gt; 60 °C</li>
+          </ul>
+        </header>
+        <div class="tabla-scroll">
+          <table class="tabla">
+            <thead>
+              <tr>
+                <th scope="col" class="col-sel"><span class="sr-only">Graficar</span></th>
+                <th scope="col">Motor</th>
+                <th scope="col" class="num">Temperatura</th>
+                <th scope="col" class="num">Ángulo <span class="unidad">°</span></th>
+                <th scope="col" class="num">Velocidad <span class="unidad">rad/s</span></th>
+                <th scope="col" class="num">Torque <span class="unidad">N·m</span></th>
+              </tr>
+            </thead>
+            <tbody id="tbodyMotores">
+              <tr class="esqueleto"><td></td><td><i></i></td><td><i></i></td><td><i></i></td><td><i></i></td><td><i></i></td></tr>
+              <tr class="esqueleto"><td></td><td><i></i></td><td><i></i></td><td><i></i></td><td><i></i></td><td><i></i></td></tr>
+              <tr class="esqueleto"><td></td><td><i></i></td><td><i></i></td><td><i></i></td><td><i></i></td><td><i></i></td></tr>
+              <tr class="esqueleto"><td></td><td><i></i></td><td><i></i></td><td><i></i></td><td><i></i></td><td><i></i></td></tr>
+              <tr class="esqueleto"><td></td><td><i></i></td><td><i></i></td><td><i></i></td><td><i></i></td><td><i></i></td></tr>
+              <tr class="esqueleto"><td></td><td><i></i></td><td><i></i></td><td><i></i></td><td><i></i></td><td><i></i></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Extra: ángulo de motores en el tiempo -->
+      <section class="panel panel--angulos" aria-labelledby="tituloAngulos">
+        <header class="panel__cabecera">
+          <div>
+            <h2 id="tituloAngulos">Ángulo de motores</h2>
+            <p class="panel__sub" id="subAngulos">Esperando datos del servidor…</p>
+          </div>
+          <button class="btn btn--chico btn--fantasma" id="btnLimpiarSeleccion" type="button" disabled>Limpiar selección</button>
+        </header>
+        <div class="panel__cuerpo">
+          <div class="grafico grafico--alto">
+            <canvas id="chartAngulos" role="img" aria-label="Ángulo en grados de los motores seleccionados a lo largo del tiempo"></canvas>
+            <p class="vacio vacio--superpuesto" id="vacioAngulos">Marcá motores en la tabla para ver su ángulo en el tiempo.</p>
+          </div>
+        </div>
+      </section>
     </div>
-    <div class="barra"><div id="barraSoc"></div></div>
-    <div class="celdas" id="celdas"><span class="vacio">Sin datos de celdas</span></div>
-  </section>
 
-  <section>
-    <h2>Fuerzas por pata</h2>
-    <div class="patas" id="patas">
-      <div class="pata" id="pata-FL">FL<small>delantera izq.</small></div>
-      <div class="pata" id="pata-FR">FR<small>delantera der.</small></div>
-      <div class="pata" id="pata-RL">RL<small>trasera izq.</small></div>
-      <div class="pata" id="pata-RR">RR<small>trasera der.</small></div>
+    <div class="columna">
+      <!-- 2. Panel IMU -->
+      <section class="panel panel--imu" aria-labelledby="tituloImu">
+        <header class="panel__cabecera">
+          <div>
+            <h2 id="tituloImu">IMU</h2>
+            <p class="panel__sub" id="subImu">Historial: 0 muestras</p>
+          </div>
+        </header>
+        <div class="panel__cuerpo">
+          <div class="imu">
+            <svg class="actitud" viewBox="-64 -64 128 128" role="img" aria-labelledby="actitudTitulo">
+              <title id="actitudTitulo">Horizonte artificial (roll y pitch) y anillo de yaw</title>
+              <defs><clipPath id="recorteActitud"><circle r="42"/></clipPath></defs>
+              <g clip-path="url(#recorteActitud)">
+                <g id="horizonte">
+                  <rect class="actitud__cielo" x="-120" y="-160" width="240" height="160"/>
+                  <rect class="actitud__suelo" x="-120" y="0" width="240" height="160"/>
+                  <line class="actitud__linea" x1="-120" x2="120" y1="0" y2="0"/>
+                  <line class="actitud__escala" x1="-10" x2="10" y1="-20" y2="-20"/>
+                  <line class="actitud__escala" x1="-6" x2="6" y1="-10" y2="-10"/>
+                  <line class="actitud__escala" x1="-6" x2="6" y1="10" y2="10"/>
+                  <line class="actitud__escala" x1="-10" x2="10" y1="20" y2="20"/>
+                </g>
+              </g>
+              <circle class="actitud__marco" r="42"/>
+              <path class="actitud__avion" d="M-26 0H-9l5 5h8l5-5H26"/>
+              <circle class="actitud__centro" r="1.6"/>
+              <g id="rumbo"></g>
+              <path class="actitud__indice" d="M0 -45 L-4 -51 H4 Z"/>
+            </svg>
+            <div class="lecturas" role="group" aria-label="Lecturas IMU (click para mostrar u ocultar en el gráfico)">
+              <button class="lectura" type="button" data-serie-imu="0" aria-pressed="true" style="--c: var(--serie-roll)">
+                <span class="lectura__nombre">Roll</span><span class="lectura__valor"><span id="imu-roll">–</span>°</span>
+              </button>
+              <button class="lectura" type="button" data-serie-imu="1" aria-pressed="true" style="--c: var(--serie-pitch)">
+                <span class="lectura__nombre">Pitch</span><span class="lectura__valor"><span id="imu-pitch">–</span>°</span>
+              </button>
+              <button class="lectura" type="button" data-serie-imu="2" aria-pressed="true" style="--c: var(--serie-yaw)">
+                <span class="lectura__nombre">Yaw</span><span class="lectura__valor"><span id="imu-yaw">–</span>°</span>
+              </button>
+            </div>
+          </div>
+          <div class="grafico">
+            <canvas id="chartImu" role="img" aria-label="Roll, pitch y yaw en grados a lo largo del tiempo"></canvas>
+          </div>
+          <p class="panel__nota" id="imuAcc">Aceleración: –</p>
+        </div>
+      </section>
+
+      <!-- 3. Panel BMS -->
+      <section class="panel panel--bms" aria-labelledby="tituloBms">
+        <header class="panel__cabecera">
+          <div>
+            <h2 id="tituloBms">Batería (BMS)</h2>
+            <p class="panel__sub">Carga, corriente, temperatura y celdas</p>
+          </div>
+        </header>
+        <div class="panel__cuerpo">
+          <div class="bms">
+            <div class="bms__carga">
+              <p class="bms__pct"><span id="bmsSoc">–</span><small>%</small></p>
+              <div class="medidor" id="bmsMedidor" data-nivel="sin-dato" role="meter" aria-label="Carga de batería"
+                   aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="medidor__relleno" id="bmsRelleno"></div></div>
+            </div>
+            <dl class="metricas">
+              <div title="Negativo = descarga (convención del robot real)">
+                <dt>Corriente</dt><dd><span id="bmsCorriente">–</span> <small>mA</small></dd>
+              </div>
+              <div><dt>Temperatura</dt><dd><span id="bmsTemp">–</span> <small>°C</small></dd></div>
+              <div title="Cantidad de celdas y diferencia entre la más cargada y la menos cargada">
+                <dt>Celdas</dt><dd id="bmsResumenCeldas">–</dd>
+              </div>
+            </dl>
+          </div>
+          <div id="bmsCeldas"></div>
+        </div>
+      </section>
+
+      <!-- 4. Panel de fuerzas por pata -->
+      <section class="panel panel--patas" aria-labelledby="tituloPatas">
+        <header class="panel__cabecera">
+          <div>
+            <h2 id="tituloPatas">Contacto de patas</h2>
+            <p class="panel__sub" id="subPatas">Esperando datos del servidor…</p>
+          </div>
+          <ul class="leyenda" aria-label="Referencias">
+            <li data-nivel="ok"><i class="nivel" aria-hidden="true"></i>apoyada</li>
+            <li data-nivel="aire"><i class="nivel" aria-hidden="true"></i>en el aire</li>
+          </ul>
+        </header>
+        <div class="panel__cuerpo">
+          <div class="patas" id="patasContenido">
+            <svg class="patas__vista" id="patasSvg" viewBox="-80 -84 160 160" role="img" aria-label="Vista superior del robot con el contacto de cada pata"></svg>
+            <div class="marcha">
+              <p class="marcha__titulo">Diagrama de marcha <span>(el tiempo avanza hacia la derecha)</span></p>
+              <canvas id="marcha" role="img" aria-label="Historial de apoyo de cada pata"></canvas>
+            </div>
+          </div>
+          <p class="vacio" id="patasVacio" hidden>Este robot no reporta contacto de patas.</p>
+        </div>
+      </section>
     </div>
-    <p id="avisoPatas" class="vacio" hidden>Este robot no reporta patas.</p>
-  </section>
-</main>
+  </main>
 
-<script>
-const MAX_PUNTOS = 60;       // muestras del gráfico IMU
-const POLLING_MS = 500;      // polling de respaldo si el WebSocket no está activo
+  <footer class="pie">
+    <p>TP05 - Desarrollo de Aplicaciones II. Datos según <code>API.md</code> de la cátedra (<a id="enlaceDocs" href="#" target="_blank" rel="noopener">documentación del servidor</a>).</p>
+    <p class="pie__nota" id="notaDerivados" hidden>
+      En el simulador y en modo demo, el torque, la temperatura, roll/pitch, las fuerzas de pata y la batería son <strong>derivados</strong>, no mediciones. Con el robot real van a dar otros valores.
+    </p>
+    <p class="pie__atajos">Atajos de teclado: <kbd>C</kbd> capturar, <kbd>R</kbd> grabar, <kbd>P</kbd> pausar</p>
+  </footer>
+</div>
 
-let ws = null, pollingId = null, reconectarId = null;
-let ultima = null;           // último JSON recibido
-const capturas = [];         // muestras guardadas con "Capturar muestra"
+<div class="avisos" id="avisos" aria-live="polite"></div>
 
-const $ = (id) => document.getElementById(id);
-
-/* ---------- Gráfico IMU ---------- */
-const chart = new Chart($("chartImu"), {
-  type: "line",
-  data: { labels: [], datasets: [
-    { label: "Roll",  data: [], borderColor: "#d64545", pointRadius: 0, borderWidth: 2 },
-    { label: "Pitch", data: [], borderColor: "#1f5f8b", pointRadius: 0, borderWidth: 2 },
-    { label: "Yaw",   data: [], borderColor: "#2e9e5b", pointRadius: 0, borderWidth: 2 },
-  ]},
-  options: { animation: false, maintainAspectRatio: false,
-    scales: { x: { display: false }, y: { title: { display: true, text: "grados" } } } }
-});
-
-/* ---------- Conexión ---------- */
-function setEstado(texto, clase) { $("estado").textContent = texto; $("estado").className = clase; }
-
-function conectar() {
-  detener();
-  const host = $("servidor").value.trim();
-  setEstado("Conectando…", "");
-  try {
-    ws = new WebSocket("ws://" + host + "/ws");
-  } catch (e) { iniciarPolling(host); return; }
-  ws.onopen = () => { setEstado("En vivo (WebSocket)", "on"); pararPolling(); };
-  ws.onmessage = (e) => procesar(JSON.parse(e.data));
-  ws.onclose = () => {
-    setEstado("Reconectando…", "off");
-    iniciarPolling(host);                       // mientras tanto, polling
-    reconectarId = setTimeout(conectar, 2000);  // y reintento el WebSocket
-  };
-  ws.onerror = () => ws.close();
-}
-
-function iniciarPolling(host) {
-  if (pollingId) return;
-  pollingId = setInterval(async () => {
-    try {
-      const r = await fetch("http://" + host + "/telemetria");
-      procesar(await r.json());
-      setEstado("En vivo (polling)", "on");
-    } catch (e) { setEstado("Sin conexión con el servidor", "off"); }
-  }, POLLING_MS);
-}
-function pararPolling() { clearInterval(pollingId); pollingId = null; }
-function detener() {
-  clearTimeout(reconectarId);
-  pararPolling();
-  if (ws) { ws.onclose = null; ws.close(); ws = null; }
-}
-
-/* ---------- Pintar datos ---------- */
-function claseTemp(t) { return t < 40 ? "" : (t <= 60 ? "warn" : "hot"); }
-const f = (n, d = 2) => Number(n).toFixed(d);
-
-function procesar(t) {
-  ultima = t;
-  pintarMotores(t);
-  pintarImu(t.imu);
-  pintarBms(t.bms);
-  pintarPatas(t.fuerzas);
-}
-
-function pintarMotores(t) {
-  $("tituloMotores").textContent = "Motores – " + t.modelo.toUpperCase() + " (" + t.motores.length + ")";
-  $("tbodyMotores").innerHTML = t.motores.map((m) =>
-    `<tr><td>${m.nombre}</td>
-     <td><span class="temp"><i class="dot ${claseTemp(m.temperatura)}"></i>${f(m.temperatura, 1)} °C</span></td>
-     <td>${f(m.angulo)}</td><td>${f(m.velocidad, 3)}</td><td>${f(m.torque)}</td></tr>`
-  ).join("");
-}
-
-function pintarImu(i) {
-  $("roll").textContent = f(i.roll); $("pitch").textContent = f(i.pitch); $("yaw").textContent = f(i.yaw);
-  chart.data.labels.push("");
-  [i.roll, i.pitch, i.yaw].forEach((v, k) => chart.data.datasets[k].data.push(v));
-  if (chart.data.labels.length > MAX_PUNTOS) {
-    chart.data.labels.shift();
-    chart.data.datasets.forEach((d) => d.data.shift());
-  }
-  chart.update("none");
-}
-
-function pintarBms(b) {
-  $("soc").textContent = b.soc; $("corriente").textContent = b.corriente; $("bmsTemp").textContent = f(b.temperatura, 1);
-  $("barraSoc").style.width = b.soc + "%";
-  $("barraSoc").style.background = b.soc > 40 ? "var(--ok)" : (b.soc > 20 ? "var(--warn)" : "var(--hot)");
-  $("celdas").innerHTML = b.celdas && b.celdas.length
-    ? b.celdas.map((v, k) => `<div class="celda"><span>Celda ${k + 1}</span>${f(v, 3)} V</div>`).join("")
-    : '<span class="vacio">Sin datos de celdas</span>';
-}
-
-function pintarPatas(fz) {
-  const hay = fz && Object.keys(fz).length > 0 && !/g1/i.test(ultima.modelo);
-  $("patas").hidden = !hay; $("avisoPatas").hidden = hay;
-  if (!hay) return;
-  for (const p of ["FR", "FL", "RR", "RL"]) $("pata-" + p).classList.toggle("apoyada", fz[p] === 1);
-}
-
-/* ---------- Capturar y exportar CSV ---------- */
-function capturar() {
-  if (!ultima) { $("msg").textContent = "Todavía no hay datos para capturar"; return; }
-  capturas.push(JSON.parse(JSON.stringify(ultima)));   // copia del estado actual
-  $("msg").textContent = "Muestras: " + capturas.length;
-}
-
-function exportarCsv() {
-  if (!capturas.length) { $("msg").textContent = "Capturá al menos una muestra"; return; }
-  const base = ["ts", "modelo", "roll", "pitch", "yaw", "soc", "corriente", "bms_temp", "FR", "FL", "RR", "RL"];
-  const nombres = capturas[0].motores.map((m) => m.nombre);
-  const cab = base.concat(nombres.flatMap((n) => [n + "_angulo", n + "_velocidad", n + "_torque", n + "_temp"]));
-  const filas = capturas.map((c) => {
-    const fz = c.fuerzas || {};
-    const fila = [c.ts, c.modelo, c.imu.roll, c.imu.pitch, c.imu.yaw, c.bms.soc, c.bms.corriente, c.bms.temperatura,
-                  fz.FR ?? "", fz.FL ?? "", fz.RR ?? "", fz.RL ?? ""];
-    c.motores.forEach((m) => fila.push(m.angulo, m.velocidad, m.torque, m.temperatura));
-    return fila.join(",");
-  });
-  const blob = new Blob([[cab.join(",")].concat(filas).join("\n")], { type: "text/csv;charset=utf-8" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "telemetria_" + new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-") + ".csv";
-  a.click();
-  URL.revokeObjectURL(a.href);
-}
-
-$("btnConectar").onclick = conectar;
-$("btnCapturar").onclick = capturar;
-$("btnCsv").onclick = exportarCsv;
-conectar();
-</script>
+<script src="vendor/chart.umd.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/observable.js"></script>
+<script src="js/adaptador.js"></script>
+<script src="js/cliente.js"></script>
+<script src="js/captura.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/graficos.js"></script>
+<script src="js/alertas.js"></script>
+<script src="js/paneles/resumen.js"></script>
+<script src="js/paneles/motores.js"></script>
+<script src="js/paneles/angulos.js"></script>
+<script src="js/paneles/imu.js"></script>
+<script src="js/paneles/bms.js"></script>
+<script src="js/paneles/patas.js"></script>
+<script src="js/app.js"></script>
 </body>
 </html>

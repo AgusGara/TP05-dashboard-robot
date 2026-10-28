@@ -1,0 +1,26 @@
+# Configuración local de herramientas
+.claude/
+CLAUDE.md
+CLAUDE.local.md
+.vscode/
+.idea/
+
+# Sistema operativo
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Dependencias y entornos (por si se copia el backend de la cátedra acá)
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Variables de entorno y logs
+.env
+.env.*
+*.log
+
+# CSV exportados desde el dashboard
+telemetria_*.csv

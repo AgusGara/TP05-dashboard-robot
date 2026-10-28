@@ -15,6 +15,12 @@ const CONFIG = Object.freeze({
   MAX_MOTORES_GRAFICO: 6,
   MAX_MUESTRAS_GRABACION: 36000, // 1 hora a 10 Hz
 
+  // Formato del CSV:
+  //   "excel"    separa con ; y usa coma decimal. Es lo que espera Excel con la
+  //              configuración regional de Argentina, así se abre bien con doble clic.
+  //   "estandar" separa con , y usa punto decimal (Google Sheets, Python, Excel en inglés).
+  CSV_FORMATO: "excel",
+
   // Umbrales. El semáforo de temperatura es el mismo de electroSim.
   TEMP_AMARILLO: 40,            // °C
   TEMP_ROJO: 60,                // °C

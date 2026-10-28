@@ -46,7 +46,8 @@ class RegistroMuestras extends Observable {
     this.#notificar();
   }
 
-  aCsv() {
+  aCsv(nombreFormato = CONFIG.CSV_FORMATO) {
+    const formato = FORMATOS_CSV[nombreFormato] ?? FORMATOS_CSV.estandar;
     const filas = this.#muestras.map(filaCsv);
     const encabezados = [];
     const vistos = new Set();
@@ -55,8 +56,9 @@ class RegistroMuestras extends Observable {
         if (!vistos.has(clave)) { vistos.add(clave); encabezados.push(clave); }
       }
     }
-    const lineas = [encabezados.map(campoCsv).join(",")];
-    for (const fila of filas) lineas.push(encabezados.map((h) => campoCsv(fila.get(h))).join(","));
+    const campo = (valor) => campoCsv(valor, formato);
+    const lineas = [encabezados.map(campo).join(formato.separador)];
+    for (const fila of filas) lineas.push(encabezados.map((h) => campo(fila.get(h))).join(formato.separador));
     // El BOM hace que Excel abra el archivo como UTF-8.
     return `﻿${lineas.join("\r\n")}\r\n`;
   }
@@ -103,10 +105,18 @@ function filaCsv(m) {
   return fila;
 }
 
-function campoCsv(valor) {
+// Ver CSV_FORMATO en config.js.
+const FORMATOS_CSV = {
+  excel: { separador: ";", decimal: "," },
+  estandar: { separador: ",", decimal: "." },
+};
+
+function campoCsv(valor, formato) {
   if (valor === null || valor === undefined) return "";
+  if (typeof valor === "number") return String(valor).replace(".", formato.decimal);
   const texto = String(valor);
-  return /[",\r\n]/.test(texto) ? `"${texto.replaceAll('"', '""')}"` : texto;
+  const especiales = new RegExp(`["\\r\\n${formato.separador}]`);
+  return especiales.test(texto) ? `"${texto.replaceAll('"', '""')}"` : texto;
 }
 
 // Hora local con zona horaria, ej: 2026-10-28T14:03:22.123-03:00

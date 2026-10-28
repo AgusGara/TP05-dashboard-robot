@@ -104,8 +104,14 @@ se cambian en `js/config.js`.
 
 ## Formato del CSV
 
-Una fila por muestra, separado por comas y en UTF-8. Las columnas dependen del
-robot:
+Una fila por muestra, en UTF-8. Por defecto se separa con `;` y usa coma decimal,
+que es lo que espera Excel con la configuración regional de Argentina: así se
+abre bien con doble clic. Para Google Sheets, Python o Excel en inglés se puede
+cambiar `CSV_FORMATO` a `"estandar"` en `js/config.js` (separa con `,` y usa
+punto decimal). Para leerlo con pandas en el formato por defecto:
+`pd.read_csv(archivo, sep=";", decimal=",")`.
+
+Las columnas dependen del robot:
 
 - `fecha_hora`, `ts_s`, `modelo`
 - `roll_deg`, `pitch_deg`, `yaw_deg`, `ax_m_s2`, `ay_m_s2`, `az_m_s2`

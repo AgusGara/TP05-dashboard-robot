@@ -16,14 +16,18 @@ const TEXTO_FASE = {
 const cliente = new ClienteTelemetria();
 const registro = new RegistroMuestras();
 const alertas = new Alertas({ alReintentar: (host) => conectar(host), alReanudar: () => alternarPausa() });
+const eventos = new RegistroEventos();
+new PanelEventos(eventos);
+const detalle = new DetalleMotor();
 const angulos = new PanelAngulos();
 const motores = new PanelMotores((nombre) => {
   if (!angulos.alternar(nombre)) {
     Avisos.mostrar(`Se pueden graficar hasta ${CONFIG.MAX_MOTORES_GRAFICO} motores a la vez`, { tipo: "aviso" });
   }
-});
+}, (nombre) => detalle.abrir(nombre));
+const mapa = new PanelMapa((nombre) => detalle.abrir(nombre));
 // La tabla tiene que configurarse antes que el gráfico, que marca su selección en ella.
-const paneles = [new PanelResumen(), motores, angulos, new PanelImu(), new PanelBms(), new PanelPatas()];
+const paneles = [new PanelResumen(), motores, mapa, angulos, new PanelImu(), new PanelBms(), new PanelPatas(), detalle];
 
 let info = null;
 let ultima = null;           // última lectura recibida
@@ -44,6 +48,7 @@ cliente.suscribir("info", (nueva) => {
   if (!mismoRobot) {
     ultimoTs = null;
     paneles.forEach((p) => p.configurar(nueva));
+    eventos.robot(nueva);
   }
 });
 
@@ -53,6 +58,7 @@ cliente.suscribir("telemetria", (t) => {
   if (ultimoTs !== null && t.ts < ultimoTs - 0.5) paneles.forEach((p) => p.reiniciar?.());
   ultimoTs = t.ts;
   paneles.forEach((p) => p.agregar?.(t));
+  eventos.revisar(t);
   ultima = t;
   programarPintado();
 });
@@ -60,6 +66,7 @@ cliente.suscribir("telemetria", (t) => {
 cliente.suscribir("estado", (estado) => {
   pintarEstado(estado);
   alertas.actualizarConexion(estado, ultima !== null);
+  eventos.conexion(estado);
 });
 
 // Se pinta como mucho una vez por cuadro de pantalla, aunque lleguen lecturas más seguido.
@@ -186,6 +193,7 @@ function capturar() {
     return;
   }
   Avisos.mostrar(`Muestra ${registro.total} capturada (t = ${formatear(t.ts, 1)} s)`, { tipo: "ok", duracion: 2000 });
+  eventos.agregar("captura", `Muestra ${registro.total} capturada`);
 }
 
 function alternarGrabacion() {
@@ -193,23 +201,37 @@ function alternarGrabacion() {
   Avisos.mostrar(
     grabando ? "Grabando: se guarda cada lectura que llega" : `Grabación detenida, ${registro.total} muestras en total`,
     { tipo: grabando ? "info" : "ok", duracion: 2500 });
+  eventos.agregar("captura", grabando ? "Empezó la grabación" : `Terminó la grabación (${registro.total} muestras en total)`);
 }
 
-function exportarCsv() {
-  if (!registro.total) return;
+// Nombre de archivo con el robot y la hora, ej: telemetria_go2_2026-10-29_14-03-22.csv
+function nombreArchivo(prefijo) {
   const ahora = new Date();
   const dos = (n) => String(n).padStart(2, "0");
   const marca = `${ahora.getFullYear()}-${dos(ahora.getMonth() + 1)}-${dos(ahora.getDate())}` +
     `_${dos(ahora.getHours())}-${dos(ahora.getMinutes())}-${dos(ahora.getSeconds())}`;
-  descargarArchivo(`telemetria_${info?.modelo ?? "robot"}_${marca}.csv`, registro.aCsv(), "text/csv;charset=utf-8");
+  return `${prefijo}_${info?.modelo ?? "robot"}_${marca}.csv`;
+}
+
+function exportarCsv() {
+  if (!registro.total) return;
+  descargarArchivo(nombreArchivo("telemetria"), registro.aCsv(), "text/csv;charset=utf-8");
   totalExportado = registro.total;
   Avisos.mostrar(`CSV exportado con ${registro.total} muestras`, { tipo: "ok" });
+  eventos.agregar("captura", `CSV exportado con ${registro.total} muestras`);
+}
+
+function exportarEventos() {
+  if (!eventos.lista.length) return;
+  descargarArchivo(nombreArchivo("eventos"), eventos.aCsv(), "text/csv;charset=utf-8");
+  Avisos.mostrar(`Se exportaron ${eventos.lista.length} eventos`, { tipo: "ok" });
 }
 
 function descartar() {
   const previas = registro.descartar();
   if (!previas.length) return;
   totalExportado = 0;
+  eventos.agregar("captura", `Se descartaron ${previas.length} muestras`);
   Avisos.mostrar(`Se descartaron ${previas.length} muestras`, {
     accion: { texto: "Deshacer", fn: () => registro.restaurar(previas) },
     duracion: 6000,
@@ -228,6 +250,8 @@ $("btnCapturar").addEventListener("click", capturar);
 $("btnGrabar").addEventListener("click", alternarGrabacion);
 $("btnCsv").addEventListener("click", exportarCsv);
 $("btnDescartar").addEventListener("click", descartar);
+$("btnExportarEventos").addEventListener("click", exportarEventos);
+$("btnLimpiarEventos").addEventListener("click", () => eventos.limpiar());
 $("btnPausa").addEventListener("click", alternarPausa);
 
 // Atajos de teclado (no se activan mientras se escribe en el campo del servidor).
@@ -295,6 +319,8 @@ formAjustes.addEventListener("submit", (e) => {
 
 umbrales.suscribir("cambio", (valores) => {
   pintarLeyendaTemperatura(valores);
+  eventos.agregar("ajustes", `Umbrales: amarillo desde ${valores.TEMP_AMARILLO} °C, rojo sobre ${valores.TEMP_ROJO} °C, ` +
+    `torque ${valores.UMBRAL_TORQUE} N·m, batería ${valores.SOC_MEDIO} % / ${valores.SOC_BAJO} %`);
   $("btnAjustes").setAttribute("aria-pressed", String(!umbrales.sonPorDefecto()));
   programarPintado();
 });

@@ -8,15 +8,23 @@ class PanelMotores {
   #tbody = $("tbodyMotores");
   #filas = new Map();          // nombre del motor: celdas de su fila
   #alAlternar;
+  #alVerDetalle;
 
   // alAlternar(nombre) se llama cuando el usuario marca o desmarca un motor.
-  constructor(alAlternar) {
+  // alVerDetalle(nombre) cuando toca el nombre del motor.
+  constructor(alAlternar, alVerDetalle) {
     this.#alAlternar = alAlternar;
+    this.#alVerDetalle = alVerDetalle;
     this.#tbody.addEventListener("change", (e) => {
       if (e.target.matches("input.sel")) this.#alAlternar(e.target.value);
     });
     // Se puede hacer click en cualquier parte de la fila, no solo en el checkbox.
     this.#tbody.addEventListener("click", (e) => {
+      const nombre = e.target.closest("button.motor__codigo");
+      if (nombre) {
+        this.#alVerDetalle(nombre.dataset.motor);
+        return;
+      }
       const fila = e.target.closest("tr.fila");
       if (!fila || e.target.closest("input") || String(getSelection())) return;
       fila.querySelector("input.sel").click();
@@ -39,7 +47,7 @@ class PanelMotores {
     }
     this.#tbody.replaceChildren(fragmento);
     setTexto($("tituloMotores"), `Motores (${info.motores.length})`);
-    setTexto($("subMotores"), "Tocá una fila para graficar el ángulo de ese motor");
+    setTexto($("subMotores"), "Tocá una fila para graficar su ángulo, o el nombre para ver el detalle");
   }
 
   #crearFila(nombre) {
@@ -54,7 +62,7 @@ class PanelMotores {
     const fila = el("tr", { class: "fila", "data-nivel": "sin-dato" },
       el("td", { class: "col-sel" }, check),
       el("th", { scope: "row", class: "motor" },
-        el("span", { class: "motor__codigo", text: nombre }),
+        el("button", { type: "button", class: "motor__codigo", "data-motor": nombre, text: nombre, title: "Ver detalle", "aria-label": `Ver detalle de ${nombre}` }),
         el("span", { class: "motor__desc", text: descripcionMotor(nombre) })),
       el("td", { class: "num" }, temp),
       angulo, velocidad, torque);

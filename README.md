@@ -68,6 +68,20 @@ Otras cosas que agregamos:
   quedan atenuados con el último dato y aparece un aviso. También detecta cuando
   el backend sigue contestando pero siempre con la misma lectura (pasa si se
   cierra el simulador).
+- Mapa de temperatura: el robot dibujado con cada motor pintado con el
+  semáforo, para ver de un vistazo qué parte está más caliente. El Go2 se ve
+  desde arriba, con un círculo por motor. El G1 se ve de espalda (así su
+  izquierda queda a la izquierda), con un círculo por articulación que muestra
+  el motor más caliente de esa articulación.
+- Detalle de un motor: tocando el nombre en la tabla o el motor en el mapa se
+  abre una ventana con sus valores y gráficos de temperatura (con los umbrales
+  marcados), torque y velocidad. Las flechas pasan al motor anterior o
+  siguiente.
+- Historial de eventos con la hora: cambios de semáforo de los motores,
+  batería, cortes y vueltas de la conexión, capturas, grabación y cambios de
+  umbrales. Se puede filtrar por tipo y exportar a CSV. Para que no se llene
+  con un motor que va y viene entre 39 y 40 °C, para bajar de nivel tiene que
+  quedar 2 °C por debajo del umbral.
 - Alertas de motor por encima de 60 °C y de batería baja.
 - Botón de *Ajustes* (arriba a la derecha) para cambiar los umbrales de
   temperatura, torque y batería sin tocar el código. Se aplican al instante y
@@ -103,11 +117,13 @@ js/
   adaptador.js     Adapter
   cliente.js       Facade (conexión con el backend)
   captura.js       muestras y exportación CSV
+  eventos.js       historial de eventos de la sesión
   ui.js            funciones de DOM, formato, tema y avisos
   graficos.js      configuración de Chart.js
   alertas.js       barra de alertas
   app.js           arma todo y maneja la barra superior
-  paneles/         resumen, motores, angulos, imu, bms, patas
+  paneles/         resumen, motores, mapa, angulos, imu, bms, patas, eventos y
+                   detalle (la ventana de un motor)
 vendor/chart.umd.min.js   Chart.js 4.5.1
 ```
 

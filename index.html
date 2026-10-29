@@ -150,6 +150,31 @@
         </div>
       </section>
 
+      <!-- Extra: mapa de temperatura del robot -->
+      <section class="panel panel--mapa" aria-labelledby="tituloMapa">
+        <header class="panel__cabecera">
+          <div>
+            <h2 id="tituloMapa">Mapa de temperatura</h2>
+            <p class="panel__sub" id="subMapa">Esperando datos del servidor…</p>
+          </div>
+        </header>
+        <div class="panel__cuerpo mapa">
+          <svg class="mapa__vista" id="mapaSvg" viewBox="-100 -110 200 220" role="group" aria-label="Robot con la temperatura de cada motor"></svg>
+          <div class="mapa__datos">
+            <dl class="mapa__resumen">
+              <div id="mapaCalienteDato" data-nivel="sin-dato">
+                <dt>Más caliente</dt>
+                <dd><i class="nivel" aria-hidden="true"></i><span id="mapaCaliente">–</span> <small id="mapaCalienteTemp"></small></dd>
+              </div>
+              <div><dt>Promedio</dt><dd><span id="mapaPromedio">–</span> <small>°C</small></dd></div>
+              <div data-nivel="warn"><dt>En amarillo</dt><dd><i class="nivel" aria-hidden="true"></i><span id="mapaAmarillos">–</span></dd></div>
+              <div data-nivel="hot"><dt>En rojo</dt><dd><i class="nivel" aria-hidden="true"></i><span id="mapaRojos">–</span></dd></div>
+            </dl>
+            <p class="panel__nota">Tocá un motor del dibujo para ver su detalle.</p>
+          </div>
+        </div>
+      </section>
+
       <!-- Extra: ángulo de motores en el tiempo -->
       <section class="panel panel--angulos" aria-labelledby="tituloAngulos">
         <header class="panel__cabecera">
@@ -277,6 +302,30 @@
           <p class="vacio" id="patasVacio" hidden>Este robot no reporta contacto de patas.</p>
         </div>
       </section>
+
+      <!-- Extra: historial de eventos -->
+      <section class="panel panel--eventos" aria-labelledby="tituloEventos">
+        <header class="panel__cabecera">
+          <div>
+            <h2 id="tituloEventos">Eventos</h2>
+            <p class="panel__sub" id="subEventos">Todavía no pasó nada</p>
+          </div>
+          <div class="vistas">
+            <button class="btn btn--chico" id="btnExportarEventos" type="button" disabled title="Descarga la lista en CSV">Exportar</button>
+            <button class="btn btn--chico btn--fantasma" id="btnLimpiarEventos" type="button" disabled>Limpiar</button>
+          </div>
+        </header>
+        <div class="panel__cuerpo">
+          <div class="filtros" id="filtrosEventos" role="group" aria-label="Qué eventos mostrar">
+            <button class="btn btn--chico" type="button" data-filtro="todos" aria-pressed="true">Todos</button>
+            <button class="btn btn--chico" type="button" data-filtro="motor" aria-pressed="false">Motores</button>
+            <button class="btn btn--chico" type="button" data-filtro="bateria" aria-pressed="false">Batería</button>
+            <button class="btn btn--chico" type="button" data-filtro="conexion" aria-pressed="false">Conexión</button>
+            <button class="btn btn--chico" type="button" data-filtro="sesion" aria-pressed="false">Capturas</button>
+          </div>
+          <ol class="eventos" id="listaEventos" aria-live="polite" aria-relevant="additions"></ol>
+        </div>
+      </section>
     </div>
   </main>
 
@@ -290,6 +339,35 @@
 </div>
 
 <div class="avisos" id="avisos" aria-live="polite"></div>
+
+<dialog class="detalle" id="dialogoMotor" aria-labelledby="tituloDetalle">
+  <header class="detalle__cabecera">
+    <div>
+      <h2 class="detalle__titulo" id="tituloDetalle">Motor</h2>
+      <p class="panel__sub" id="subDetalle"></p>
+    </div>
+    <div class="vistas">
+      <button class="btn btn--chico btn--icono" id="btnMotorAnterior" type="button" aria-label="Motor anterior" title="Motor anterior">‹</button>
+      <button class="btn btn--chico btn--icono" id="btnMotorSiguiente" type="button" aria-label="Motor siguiente" title="Motor siguiente">›</button>
+      <button class="btn btn--chico" id="btnCerrarDetalle" type="button">Cerrar</button>
+    </div>
+  </header>
+  <dl class="metricas detalle__valores">
+    <div id="detalleTempDato" data-nivel="sin-dato"><dt>Temperatura</dt><dd><i class="nivel" aria-hidden="true"></i><span id="detalleTemp">–</span> <small>°C</small></dd></div>
+    <div><dt>Ángulo</dt><dd><span id="detalleAngulo">–</span> <small>°</small></dd></div>
+    <div><dt>Velocidad</dt><dd><span id="detalleVel">–</span> <small>rad/s</small></dd></div>
+    <div><dt>Torque</dt><dd><span id="detalleTorque">–</span> <small>N·m</small></dd></div>
+  </dl>
+  <div class="detalle__graficos">
+    <h3>Temperatura</h3>
+    <div class="grafico grafico--detalle grafico--detalle-temp"><canvas id="chartDetalleTemp" role="img" aria-label="Temperatura del motor en el tiempo, con los umbrales del semáforo"></canvas></div>
+    <h3>Torque</h3>
+    <div class="grafico grafico--detalle"><canvas id="chartDetalleTorque" role="img" aria-label="Torque del motor en el tiempo"></canvas></div>
+    <h3>Velocidad</h3>
+    <div class="grafico grafico--detalle"><canvas id="chartDetalleVel" role="img" aria-label="Velocidad del motor en el tiempo"></canvas></div>
+  </div>
+  <p class="panel__nota detalle__resumen" id="detalleResumen"></p>
+</dialog>
 
 <dialog class="ajustes" id="dialogoAjustes" aria-labelledby="tituloAjustes">
   <form id="formAjustes" method="dialog" novalidate>
@@ -338,6 +416,7 @@
 <script src="js/adaptador.js"></script>
 <script src="js/cliente.js"></script>
 <script src="js/captura.js"></script>
+<script src="js/eventos.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/graficos.js"></script>
 <script src="js/alertas.js"></script>
@@ -347,6 +426,9 @@
 <script src="js/paneles/imu.js"></script>
 <script src="js/paneles/bms.js"></script>
 <script src="js/paneles/patas.js"></script>
+<script src="js/paneles/mapa.js"></script>
+<script src="js/paneles/detalle.js"></script>
+<script src="js/paneles/eventos.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

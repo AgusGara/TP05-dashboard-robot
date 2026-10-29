@@ -24,6 +24,9 @@ function numero(valor) {
   return valor !== null && valor !== "" && Number.isFinite(n) ? n : null;
 }
 
+// Para comparar niveles del semáforo: mayor es peor.
+const ORDEN_NIVEL = { "sin-dato": 0, ok: 1, warn: 2, hot: 3 };
+
 // Semáforo de electroSim: verde < 40 °C, amarillo de 40 a 60 °C, rojo > 60 °C.
 function nivelTemperatura(temperatura) {
   if (temperatura === null) return "sin-dato";

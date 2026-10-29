@@ -9,9 +9,20 @@ de las patas.
 
 No hace falta instalar nada ni compilar.
 
+![Dashboard conectado al backend en modo demo con un Go2](docs/captura.png)
+
+## Integrantes
+
+| Integrante | LU |
+|---|---|
+| Dominguez, Juan Ignacio | 1157308 |
+| Garagaza, Agustina | 1146929 |
+| Giardina, Thomas | 1145606 |
+
 ## Cómo correrlo
 
-1. Levantar el backend de la cátedra (carpeta `TP05_Desarrollo_de_Aplicaciones_II`
+1. Levantar el backend de la cátedra (carpeta
+   [`TP05_Desarrollo_de_Aplicaciones_II`](https://github.com/tsamaan/UadeRobotLab/tree/main/05LaboratoriosTPs/TP05_Desarrollo_de_Aplicaciones_II)
    del repo `UadeRobotLab`):
    - Con el simulador: `INICIAR_TP05.bat` en Windows o `INICIAR_TP05.sh` en Linux/macOS.
    - Solo en modo demo, sin simulador:
@@ -21,14 +32,7 @@ No hace falta instalar nada ni compilar.
      ```
 
    El backend necesita `fastapi` y `uvicorn` (`pip install fastapi "uvicorn[standard]"`).
-   La cátedra pide Python 3.10 o más nuevo. Con Python 3.9 (el que viene en
-   macOS) el backend no arranca y tira
-   `TypeError: Unable to evaluate type annotation 'str | None'`. Se arregla
-   instalando un paquete más, sin tocar el código de la cátedra:
-
-   ```bash
-   pip install eval_type_backport
-   ```
+   Ver abajo [Versión de Python del backend](#versión-de-python-del-backend).
 
 2. Abrir `index.html` con doble clic. También se puede servir con
    `python -m http.server 5500` y entrar a `http://localhost:5500`.
@@ -40,6 +44,27 @@ La dirección queda guardada para la próxima vez. También se puede pasar por U
 `index.html?servidor=10.0.0.5:8001`.
 
 Para el robot real no cambia nada del frontend, solo la IP.
+
+### Versión de Python del backend
+
+La cátedra pide Python 3.10 o más nuevo, pero para que el WebSocket ande bien
+hace falta **Python 3.11 o más nuevo**:
+
+- **Python 3.9** (el que viene en macOS): el backend no arranca y tira
+  `TypeError: Unable to evaluate type annotation 'str | None'`. Arranca
+  instalando un paquete más, sin tocar el código de la cátedra:
+
+  ```bash
+  pip install eval_type_backport
+  ```
+
+- **Python 3.9 y 3.10**: el backend corta el WebSocket después del primer
+  mensaje. En `telemetry_server.py` se espera un `TimeoutError`, pero en esas
+  versiones `asyncio.wait_for` tira `asyncio.TimeoutError`, que recién en 3.11
+  pasó a ser lo mismo. El dashboard sigue andando porque pasa solo a polling,
+  pero llegan unas 3 lecturas por segundo en vez de 10, el estado alterna entre
+  *WebSocket* y *Polling* y en el historial aparece "El WebSocket se corta
+  seguido". No es un error del dashboard.
 
 ## Qué pide la consigna y dónde está
 
@@ -55,43 +80,55 @@ Para el robot real no cambia nada del frontend, solo la IP.
 | Funcionar en modo demo | Probado con `--demo` para Go2 y G1. |
 | Extensión: WebSocket en lugar de polling | Hecho (ver arriba). |
 
-Otras cosas que agregamos:
+## Otras cosas que agregamos
 
-- Gráfico del ángulo de los motores: se hace clic en una fila de la tabla para
-  agregar ese motor (hasta 6).
-- Gráfico histórico de la batería, con dos vistas: carga y corriente (cada una
-  con su eje), o el voltaje de cada celda. Sirve para ver si el pack se
-  desbalancea con el tiempo.
-- Indicadores arriba de todo: si el robot se está moviendo, el motor más
-  caliente, el torque máximo, la batería y cuántas patas están apoyadas.
-- Estado de la conexión con la frecuencia real en Hz. Si se corta, los paneles
-  quedan atenuados con el último dato y aparece un aviso. También detecta cuando
-  el backend sigue contestando pero siempre con la misma lectura (pasa si se
-  cierra el simulador).
-- Mapa de temperatura: el robot dibujado con cada motor pintado con el
+### Visualización
+
+- **Mapa de temperatura**: el robot dibujado con cada motor pintado con el
   semáforo, para ver de un vistazo qué parte está más caliente. El Go2 se ve
   desde arriba, con un círculo por motor. El G1 se ve de espalda (así su
   izquierda queda a la izquierda), con un círculo por articulación que muestra
-  el motor más caliente de esa articulación.
-- Detalle de un motor: tocando el nombre en la tabla o el motor en el mapa se
-  abre una ventana con sus valores y gráficos de temperatura (con los umbrales
-  marcados), torque y velocidad. Las flechas pasan al motor anterior o
-  siguiente.
-- Historial de eventos con la hora: cambios de semáforo de los motores,
+  el motor más caliente de esa articulación. `js/paneles/mapa.js`
+- **Detalle de un motor**: tocando el nombre en la tabla o el motor en el mapa
+  se abre una ventana con sus valores y gráficos de temperatura (con los
+  umbrales marcados), torque y velocidad. Las flechas pasan al motor anterior o
+  siguiente. `js/paneles/detalle.js`
+- **Ángulo de los motores**: se hace clic en una fila de la tabla para agregar
+  ese motor al gráfico (hasta 6). `js/paneles/angulos.js`
+- **Historial de la batería**, con dos vistas: carga y corriente (cada una con
+  su eje), o el voltaje de cada celda. Sirve para ver si el pack se desbalancea
+  con el tiempo.
+- **Indicadores arriba de todo**: si el robot se está moviendo, el motor más
+  caliente, el torque máximo, la batería y cuántas patas están apoyadas.
+  `js/paneles/resumen.js`
+
+### Sesión y alertas
+
+- **Historial de eventos** con la hora: cambios de semáforo de los motores,
   batería, cortes y vueltas de la conexión, capturas, grabación y cambios de
   umbrales. Se puede filtrar por tipo y exportar a CSV. Para que no se llene
   con un motor que va y viene entre 39 y 40 °C, para bajar de nivel tiene que
-  quedar 2 °C por debajo del umbral.
-- Alertas de motor por encima de 60 °C y de batería baja.
-- Botón de *Ajustes* (arriba a la derecha) para cambiar los umbrales de
-  temperatura, torque y batería sin tocar el código. Se aplican al instante y
-  quedan guardados en el navegador. *Restablecer* vuelve a los de la consigna
-  (40/60 °C). Si hay umbrales cambiados, el botón queda resaltado.
-- Pausar la vista para leer los valores (los datos y la grabación siguen).
-- Tema claro y oscuro, y diseño para celular.
-- Chart.js está en `vendor/`, así que funciona sin internet en el laboratorio.
+  quedar 2 °C por debajo del umbral. `js/eventos.js` y `js/paneles/eventos.js`
+- **Alertas** de motor por encima de 60 °C y de batería baja. `js/alertas.js`
+- **Estado de la conexión** con la frecuencia real en Hz. Si se corta, los
+  paneles quedan atenuados con el último dato y aparece un aviso. También
+  detecta cuando el backend sigue contestando pero siempre con la misma lectura
+  (pasa si se cierra el simulador).
+- **Pausar la vista** para leer los valores (los datos y la grabación siguen).
 
-Atajos de teclado: `C` captura, `R` graba, `P` pausa.
+### Configuración
+
+- **Ajustes** (arriba a la derecha) para cambiar los umbrales de temperatura,
+  torque y batería sin tocar el código. Se aplican al instante y quedan
+  guardados en el navegador. *Restablecer* vuelve a los de la consigna
+  (40/60 °C). Si hay umbrales cambiados, el botón queda resaltado.
+  `js/umbrales.js`
+- **Tema claro y oscuro**, y diseño para celular.
+- **Funciona sin internet**: Chart.js está en `vendor/`, así anda en el
+  laboratorio aunque no haya conexión.
+
+Atajos de teclado: `C` captura, `R` graba, `P` pausa. `Esc` cierra las ventanas
+de Ajustes y de detalle de un motor.
 
 ## Organización del código
 
@@ -104,8 +141,17 @@ datos de la interfaz:
 - **Adapter** (`js/adaptador.js`): convierte el JSON de la API al formato que
   usan los paneles y valida los datos. Si cambia la API, se modifica solo este
   archivo.
-- **Observer** (`js/observable.js`): el cliente emite eventos (`telemetria`,
-  `info`, `estado`) y los paneles y el registro de muestras se suscriben.
+- **Observer** (`js/observable.js`): la clase `Observable` tiene `suscribir()` y
+  `emitir()`. La usan todos los que tienen datos que otros necesitan, así ningún
+  panel depende de otro:
+
+  | Quién emite | Evento | Quién escucha |
+  |---|---|---|
+  | `ClienteTelemetria` | `info`, `telemetria`, `estado` | `app.js`, que les pasa cada lectura a los paneles, a la captura de muestras, al historial de eventos y a las alertas |
+  | `RegistroMuestras` | `cambio`, `limite` | el contador y los botones de captura |
+  | `RegistroEventos` | `cambio` | el panel de eventos |
+  | `Umbrales` | `cambio` | la leyenda del semáforo, el botón de Ajustes y el historial de eventos |
+  | `PanelAngulos` | `seleccion` | la tabla de motores, que pinta cada fila con el color de su línea |
 
 ```
 index.html
@@ -137,22 +183,36 @@ Los umbrales (semáforo, torque alto, batería baja) se cambian desde *Ajustes* 
 la pantalla. Sus valores por defecto y el resto de los parámetros (intervalo de
 polling, tamaños de historial, etc.) están en `js/config.js`.
 
-## Formato del CSV
+## Formato de los CSV
 
-Una fila por muestra, en UTF-8. Por defecto se separa con `;` y usa coma decimal,
+Los dos archivos van en UTF-8. Por defecto se separa con `;` y usa coma decimal,
 que es lo que espera Excel con la configuración regional de Argentina: así se
 abre bien con doble clic. Para Google Sheets, Python o Excel en inglés se puede
 cambiar `CSV_FORMATO` a `"estandar"` en `js/config.js` (separa con `,` y usa
 punto decimal). Para leerlo con pandas en el formato por defecto:
 `pd.read_csv(archivo, sep=";", decimal=",")`.
 
-Las columnas dependen del robot:
+### Muestras (`telemetria_<robot>_<fecha>.csv`)
+
+Una fila por muestra capturada. Las columnas dependen del robot:
 
 - `fecha_hora`, `ts_s`, `modelo`
 - `roll_deg`, `pitch_deg`, `yaw_deg`, `ax_m_s2`, `ay_m_s2`, `az_m_s2`
 - `bateria_soc_pct`, `bateria_corriente_mA`, `bateria_temp_C`, `celda1_V`, `celda2_V`, ...
 - `contacto_FR`, `contacto_FL`, ... (1 apoyada, 0 en el aire)
 - por cada motor: `<motor>_angulo_deg`, `<motor>_velocidad_rad_s`, `<motor>_torque_Nm`, `<motor>_temp_C`
+
+### Eventos (`eventos_<robot>_<fecha>.csv`)
+
+Una fila por evento, del más viejo al más nuevo:
+
+- `fecha_hora`: hora local con zona horaria
+- `ts_s`: tiempo del backend en la última lectura antes del evento (vacío si
+  todavía no había llegado ninguna)
+- `tipo`: `motor`, `bateria`, `conexion`, `captura` o `ajustes`
+- `nivel`: `info`, `ok`, `warn` (amarillo) o `hot` (rojo)
+- `mensaje`: el texto que se ve en el panel, por ejemplo
+  `FL_calf pasó a amarillo (40.0 °C)`
 
 ## Sobre los datos del simulador
 

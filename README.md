@@ -13,11 +13,11 @@ No hace falta instalar nada ni compilar.
 
 ## Integrantes
 
-| Integrante | LU |
-|---|---|
+|       Integrantes       |    LU   |
+|-------------------------|---------|
 | Dominguez, Juan Ignacio | 1157308 |
-| Garagaza, Agustina | 1146929 |
-| Giardina, Thomas | 1145606 |
+| Garagaza, Agustina      | 1146929 |
+| Giardina, Thomas        | 1145606 |
 
 ## Cómo correrlo
 

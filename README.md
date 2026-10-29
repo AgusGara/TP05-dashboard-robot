@@ -20,6 +20,16 @@ No hace falta instalar nada ni compilar.
      python entorno/arrancar_api.py --demo --robot go2
      ```
 
+   El backend necesita `fastapi` y `uvicorn` (`pip install fastapi "uvicorn[standard]"`).
+   La cátedra pide Python 3.10 o más nuevo. Con Python 3.9 (el que viene en
+   macOS) el backend no arranca y tira
+   `TypeError: Unable to evaluate type annotation 'str | None'`. Se arregla
+   instalando un paquete más, sin tocar el código de la cátedra:
+
+   ```bash
+   pip install eval_type_backport
+   ```
+
 2. Abrir `index.html` con doble clic. También se puede servir con
    `python -m http.server 5500` y entrar a `http://localhost:5500`.
 3. Poner la dirección que muestra la consola del backend y apretar *Conectar*.
@@ -49,6 +59,9 @@ Otras cosas que agregamos:
 
 - Gráfico del ángulo de los motores: se hace clic en una fila de la tabla para
   agregar ese motor (hasta 6).
+- Gráfico histórico de la batería, con dos vistas: carga y corriente (cada una
+  con su eje), o el voltaje de cada celda. Sirve para ver si el pack se
+  desbalancea con el tiempo.
 - Indicadores arriba de todo: si el robot se está moviendo, el motor más
   caliente, el torque máximo, la batería y cuántas patas están apoyadas.
 - Estado de la conexión con la frecuencia real en Hz. Si se corta, los paneles

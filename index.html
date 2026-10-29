@@ -221,6 +221,10 @@
             <h2 id="tituloBms">Batería (BMS)</h2>
             <p class="panel__sub">Carga, corriente, temperatura y celdas</p>
           </div>
+          <div class="vistas" role="group" aria-label="Qué muestra el gráfico">
+            <button class="btn btn--chico" type="button" data-vista-bms="carga" aria-pressed="true">Carga y corriente</button>
+            <button class="btn btn--chico" type="button" data-vista-bms="celdas" aria-pressed="false">Celdas</button>
+          </div>
         </header>
         <div class="panel__cuerpo">
           <div class="bms">
@@ -240,6 +244,9 @@
             </dl>
           </div>
           <div id="bmsCeldas"></div>
+          <div class="grafico grafico--bms">
+            <canvas id="chartBms" role="img" aria-label="Historial de la batería: carga y corriente, o voltaje de cada celda"></canvas>
+          </div>
         </div>
       </section>
 

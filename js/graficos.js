@@ -41,7 +41,7 @@ function crearGrafico(canvas, { datasets = [], escalas = {}, leyenda = false }) 
         tooltip: {
           callbacks: {
             title: (items) => (items.length ? `t = ${items[0].parsed.x.toFixed(1)} s` : ""),
-            label: (ctx) => ` ${ctx.dataset.label}: ${formatear(ctx.parsed.y, 2)}${ctx.dataset.unidad ?? ""}`,
+            label: (ctx) => ` ${ctx.dataset.label}: ${formatear(ctx.parsed.y, ctx.dataset.decimales ?? 2)}${ctx.dataset.unidad ?? ""}`,
           },
         },
       },

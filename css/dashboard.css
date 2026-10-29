@@ -777,6 +777,9 @@ a { color: var(--accent); }
 .celda[data-extremo="min"] .celda__n::after { content: " mín"; color: var(--warn); }
 .celda[data-extremo="max"] .celda__n::after { content: " máx"; }
 
+.panel__cabecera > .vistas { display: flex; flex: none; gap: 4px; }
+.grafico--bms { margin-top: 14px; }
+
 /* ---------- Patas ---------- */
 .patas {
   display: grid;

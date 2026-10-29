@@ -33,10 +33,10 @@ class Alertas {
     if (criticos.length) {
       nueva = {
         tipo: "error",
-        titulo: `${criticos.length === 1 ? "Motor" : `${criticos.length} motores`} sobre ${CONFIG.TEMP_ROJO} °C:`,
+        titulo: `${criticos.length === 1 ? "Motor" : `${criticos.length} motores`} sobre ${umbrales.get("TEMP_ROJO")} °C:`,
         detalle: criticos.map((m) => m.nombre).join(", "),
       };
-    } else if (t.bms.soc !== null && t.bms.soc > 0 && t.bms.soc <= CONFIG.SOC_BAJO) {
+    } else if (t.bms.soc !== null && t.bms.soc > 0 && t.bms.soc <= umbrales.get("SOC_BAJO")) {
       nueva = { tipo: "aviso", titulo: "Batería baja:", detalle: `${t.bms.soc} % de carga.` };
     }
     if (JSON.stringify(nueva) !== JSON.stringify(this.#deDatos)) {

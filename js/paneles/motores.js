@@ -77,11 +77,11 @@ class PanelMotores {
       setTexto(f.angulo, formatear(m.angulo, 1));
       setTexto(f.velocidad, formatear(m.velocidad, 2));
       setTexto(f.torque, formatear(m.torque, 2));
-      const alto = m.torque !== null && Math.abs(m.torque) >= CONFIG.UMBRAL_TORQUE;
+      const alto = m.torque !== null && Math.abs(m.torque) >= umbrales.get("UMBRAL_TORQUE");
       if (f.torqueAlto !== alto) {
         f.torqueAlto = alto;
         f.torque.classList.toggle("torque--alto", alto);
-        f.torque.title = alto ? `Supera ${CONFIG.UMBRAL_TORQUE} N·m` : "";
+        f.torque.title = alto ? `Supera ${umbrales.get("UMBRAL_TORQUE")} N·m` : "";
       }
     }
   }

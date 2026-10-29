@@ -69,6 +69,10 @@ Otras cosas que agregamos:
   el backend sigue contestando pero siempre con la misma lectura (pasa si se
   cierra el simulador).
 - Alertas de motor por encima de 60 °C y de batería baja.
+- Botón de *Ajustes* (arriba a la derecha) para cambiar los umbrales de
+  temperatura, torque y batería sin tocar el código. Se aplican al instante y
+  quedan guardados en el navegador. *Restablecer* vuelve a los de la consigna
+  (40/60 °C). Si hay umbrales cambiados, el botón queda resaltado.
 - Pausar la vista para leer los valores (los datos y la grabación siguen).
 - Tema claro y oscuro, y diseño para celular.
 - Chart.js está en `vendor/`, así que funciona sin internet en el laboratorio.
@@ -93,8 +97,9 @@ datos de la interfaz:
 index.html
 css/dashboard.css
 js/
-  config.js        umbrales, intervalos y tamaños de historial
+  config.js        umbrales por defecto, intervalos y tamaños de historial
   observable.js    Observer
+  umbrales.js      umbrales editables desde Ajustes (los guarda y avisa al cambiar)
   adaptador.js     Adapter
   cliente.js       Facade (conexión con el backend)
   captura.js       muestras y exportación CSV
@@ -112,8 +117,9 @@ lecturas llegan unas 10 veces por segundo; el historial se guarda siempre, pero
 la pantalla se actualiza con `requestAnimationFrame`, y la tabla de motores
 solo cambia los textos en lugar de volver a armar el HTML.
 
-Los umbrales (semáforo, torque alto, batería baja, intervalo de polling, etc.)
-se cambian en `js/config.js`.
+Los umbrales (semáforo, torque alto, batería baja) se cambian desde *Ajustes* en
+la pantalla. Sus valores por defecto y el resto de los parámetros (intervalo de
+polling, tamaños de historial, etc.) están en `js/config.js`.
 
 ## Formato del CSV
 
@@ -138,4 +144,4 @@ Según el `API.md` de la cátedra, en el simulador y en modo demo el torque, la
 temperatura, roll/pitch, las fuerzas de pata y la batería son valores derivados,
 no mediciones. El dashboard lo aclara abajo de todo cuando el servidor está en
 esos modos. Con el robot real los números van a ser otros, así que los umbrales
-de alerta habría que revisarlos en el laboratorio.
+de alerta habría que revisarlos en el laboratorio desde *Ajustes*.

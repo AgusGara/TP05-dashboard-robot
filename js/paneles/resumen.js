@@ -22,7 +22,7 @@ class PanelResumen {
       $("kpiTemp").dataset.nivel = caliente.nivel;
       setTexto($("kpiTempValor"), `${formatear(caliente.temperatura, 1)} °C`);
       const elevados = motores.filter((m) => m.nivel === "warn" || m.nivel === "hot").length;
-      setTexto($("kpiTempSub"), elevados ? `${caliente.nombre}, ${elevados} sobre ${CONFIG.TEMP_AMARILLO} °C` : caliente.nombre);
+      setTexto($("kpiTempSub"), elevados ? `${caliente.nombre}, ${elevados} sobre ${umbrales.get("TEMP_AMARILLO")} °C` : caliente.nombre);
     }
 
     const exigido = maximoPor(motores, (m) => (m.torque === null ? null : Math.abs(m.torque)));
@@ -32,7 +32,7 @@ class PanelResumen {
     }
 
     const soc = t.bms.soc;
-    $("kpiBateria").dataset.nivel = soc === null ? "sin-dato" : soc > CONFIG.SOC_MEDIO ? "ok" : soc > CONFIG.SOC_BAJO ? "warn" : "hot";
+    $("kpiBateria").dataset.nivel = soc === null ? "sin-dato" : soc > umbrales.get("SOC_MEDIO") ? "ok" : soc > umbrales.get("SOC_BAJO") ? "warn" : "hot";
     setTexto($("kpiBateria"), soc === null ? SIN_DATO : `${soc} %`);
 
     if (t.patas.length) {

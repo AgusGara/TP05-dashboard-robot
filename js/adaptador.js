@@ -27,8 +27,8 @@ function numero(valor) {
 // Semáforo de electroSim: verde < 40 °C, amarillo de 40 a 60 °C, rojo > 60 °C.
 function nivelTemperatura(temperatura) {
   if (temperatura === null) return "sin-dato";
-  if (temperatura < CONFIG.TEMP_AMARILLO) return "ok";
-  return temperatura <= CONFIG.TEMP_ROJO ? "warn" : "hot";
+  if (temperatura < umbrales.get("TEMP_AMARILLO")) return "ok";
+  return temperatura <= umbrales.get("TEMP_ROJO") ? "warn" : "hot";
 }
 
 // Grupo de cada motor en la tabla: por pata en el Go2, por extremidad en el G1.

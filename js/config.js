@@ -21,11 +21,16 @@ const CONFIG = Object.freeze({
   //   "estandar" separa con , y usa punto decimal (Google Sheets, Python, Excel en inglés).
   CSV_FORMATO: "excel",
 
-  // Umbrales. El semáforo de temperatura es el mismo de electroSim.
+  VELOCIDAD_EN_MOVIMIENTO: 0.1, // rad/s promedio para considerar que el robot camina
+});
+
+// Valores por defecto de los umbrales. Se pueden cambiar desde Ajustes en la
+// pantalla (ver umbrales.js). El semáforo de temperatura es el de la consigna,
+// igual al de electroSim.
+const UMBRALES_POR_DEFECTO = Object.freeze({
   TEMP_AMARILLO: 40,            // °C
   TEMP_ROJO: 60,                // °C
   UMBRAL_TORQUE: 15,            // N·m
   SOC_MEDIO: 40,                // %
   SOC_BAJO: 20,                 // %
-  VELOCIDAD_EN_MOVIMIENTO: 0.1, // rad/s promedio para considerar que el robot camina
 });

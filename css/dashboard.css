@@ -778,6 +778,43 @@ a { color: var(--accent); }
 .celda[data-extremo="max"] .celda__n::after { content: " máx"; }
 
 .panel__cabecera > .vistas { display: flex; flex: none; gap: 4px; }
+
+/* ---------- Ajustes de umbrales ---------- */
+.ajustes {
+  width: min(420px, calc(100vw - 32px));
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radio-l);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--sombra);
+}
+.ajustes::backdrop { background: rgba(0, 0, 0, 0.45); }
+.ajustes__cabecera { padding: 16px 16px 4px; }
+.ajustes__cabecera h2 { font-size: 15px; font-weight: 650; }
+.ajustes__grupo { margin: 12px 16px 0; padding: 0; border: 0; }
+.ajustes__grupo legend { margin-bottom: 6px; color: var(--muted); font-size: 12px; font-weight: 600; }
+.ajustes__campo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 0;
+  font-size: 13px;
+}
+.ajustes__campo span { display: inline-flex; align-items: center; gap: 6px; min-width: 156px; color: var(--muted); white-space: nowrap; }
+.ajustes__campo .campo { flex: none; width: 76px; font-family: var(--font); text-align: right; }
+.ajustes__nota { margin-top: 2px; color: var(--muted); font-size: 12px; }
+.ajustes__error {
+  margin: 12px 16px 0;
+  padding: 8px 10px;
+  border-radius: var(--radio-m);
+  background: var(--hot-soft);
+  color: var(--hot);
+  font-size: 12.5px;
+}
+.ajustes__acciones { display: flex; flex-wrap: wrap; gap: 8px; padding: 16px; }
+.ajustes__acciones .btn--fantasma { margin-right: auto; }
 .grafico--bms { margin-top: 14px; }
 
 /* ---------- Patas ---------- */

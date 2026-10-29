@@ -258,9 +258,52 @@ function pintarBotonTema() {
 $("btnTema").addEventListener("click", () => Tema.alternar());
 Tema.alCambiar(pintarBotonTema);
 
+/* ---------- Ajustes de umbrales ---------- */
+
+const dialogoAjustes = $("dialogoAjustes");
+const formAjustes = $("formAjustes");
+
+function llenarAjustes(valores) {
+  for (const [clave, valor] of Object.entries(valores)) formAjustes.elements[clave].value = valor;
+  $("errorAjustes").hidden = true;
+}
+
+function pintarLeyendaTemperatura({ TEMP_AMARILLO, TEMP_ROJO }) {
+  setTexto($("leyendaOk"), `< ${TEMP_AMARILLO} °C`);
+  setTexto($("leyendaWarn"), `${TEMP_AMARILLO}–${TEMP_ROJO} °C`);
+  setTexto($("leyendaHot"), `> ${TEMP_ROJO} °C`);
+}
+
+$("btnAjustes").addEventListener("click", () => {
+  llenarAjustes(umbrales.todos());
+  dialogoAjustes.showModal();
+});
+$("btnRestablecer").addEventListener("click", () => llenarAjustes(UMBRALES_POR_DEFECTO));
+
+formAjustes.addEventListener("submit", (e) => {
+  if (e.submitter?.value !== "guardar") return;          // Cancelar cierra sin guardar
+  const nuevos = Object.fromEntries(Object.keys(UMBRALES_POR_DEFECTO).map((k) => [k, formAjustes.elements[k].value]));
+  try {
+    umbrales.cambiar(nuevos);
+    Avisos.mostrar(umbrales.sonPorDefecto() ? "Umbrales de la consigna restablecidos" : "Umbrales guardados", { tipo: "ok" });
+  } catch (error) {
+    e.preventDefault();                                   // el diálogo queda abierto
+    $("errorAjustes").textContent = error.message;
+    $("errorAjustes").hidden = false;
+  }
+});
+
+umbrales.suscribir("cambio", (valores) => {
+  pintarLeyendaTemperatura(valores);
+  $("btnAjustes").setAttribute("aria-pressed", String(!umbrales.sonPorDefecto()));
+  programarPintado();
+});
+
 /* ---------- Arranque ---------- */
 
 Tema.iniciar();
 pintarBotonTema();
+pintarLeyendaTemperatura(umbrales.todos());
+$("btnAjustes").setAttribute("aria-pressed", String(!umbrales.sonPorDefecto()));
 $("servidor").value = direccionInicial();
 conectar($("servidor").value);

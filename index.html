@@ -42,6 +42,10 @@
     <span class="estado__detalle" id="estadoDetalle"></span>
   </div>
 
+  <button class="btn btn--icono" id="btnAjustes" type="button" aria-label="Ajustes de umbrales" title="Umbrales de alerta">
+    <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
+  </button>
+
   <button class="btn btn--icono" id="btnTema" type="button" aria-label="Cambiar tema" title="Tema claro / oscuro">
     <svg class="icono icono-luna" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
     <svg class="icono icono-sol" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
@@ -117,9 +121,9 @@
             <p class="panel__sub" id="subMotores">Esperando datos del servidor…</p>
           </div>
           <ul class="leyenda" aria-label="Semáforo de temperatura">
-            <li data-nivel="ok"><i class="nivel" aria-hidden="true"></i>&lt; 40 °C</li>
-            <li data-nivel="warn"><i class="nivel" aria-hidden="true"></i>40–60 °C</li>
-            <li data-nivel="hot"><i class="nivel" aria-hidden="true"></i>&gt; 60 °C</li>
+            <li data-nivel="ok"><i class="nivel" aria-hidden="true"></i><span id="leyendaOk">&lt; 40 °C</span></li>
+            <li data-nivel="warn"><i class="nivel" aria-hidden="true"></i><span id="leyendaWarn">40–60 °C</span></li>
+            <li data-nivel="hot"><i class="nivel" aria-hidden="true"></i><span id="leyendaHot">&gt; 60 °C</span></li>
           </ul>
         </header>
         <div class="tabla-scroll">
@@ -287,9 +291,50 @@
 
 <div class="avisos" id="avisos" aria-live="polite"></div>
 
+<dialog class="ajustes" id="dialogoAjustes" aria-labelledby="tituloAjustes">
+  <form id="formAjustes" method="dialog" novalidate>
+    <header class="ajustes__cabecera">
+      <h2 id="tituloAjustes">Umbrales de alerta</h2>
+      <p class="panel__sub">Se aplican al instante y quedan guardados en este navegador.</p>
+    </header>
+
+    <fieldset class="ajustes__grupo">
+      <legend>Temperatura de motores</legend>
+      <label class="ajustes__campo">Amarillo desde
+        <span><input class="campo" name="TEMP_AMARILLO" type="number" step="1" inputmode="decimal" required> °C</span></label>
+      <label class="ajustes__campo">Rojo por encima de
+        <span><input class="campo" name="TEMP_ROJO" type="number" step="1" inputmode="decimal" required> °C</span></label>
+      <p class="ajustes__nota">La consigna pide 40 y 60 °C, igual que electroSim.</p>
+    </fieldset>
+
+    <fieldset class="ajustes__grupo">
+      <legend>Torque</legend>
+      <label class="ajustes__campo">Resaltar desde
+        <span><input class="campo" name="UMBRAL_TORQUE" type="number" step="0.5" inputmode="decimal" required> N·m</span></label>
+    </fieldset>
+
+    <fieldset class="ajustes__grupo">
+      <legend>Batería</legend>
+      <label class="ajustes__campo">Amarillo con
+        <span><input class="campo" name="SOC_MEDIO" type="number" step="1" inputmode="decimal" required> % o menos</span></label>
+      <label class="ajustes__campo">Rojo y alerta con
+        <span><input class="campo" name="SOC_BAJO" type="number" step="1" inputmode="decimal" required> % o menos</span></label>
+    </fieldset>
+
+    <p class="ajustes__error" id="errorAjustes" role="alert" hidden></p>
+
+    <footer class="ajustes__acciones">
+      <button class="btn btn--fantasma" id="btnRestablecer" type="button" title="Vuelve a los valores de la consigna">Restablecer</button>
+      <button class="btn" type="submit" value="cancelar" formnovalidate>Cancelar</button>
+      <button class="btn btn--primario" type="submit" value="guardar">Guardar</button>
+    </footer>
+  </form>
+</dialog>
+
 <script src="vendor/chart.umd.min.js"></script>
 <script src="js/config.js"></script>
 <script src="js/observable.js"></script>
+<script src="js/umbrales.js"></script>
 <script src="js/adaptador.js"></script>
 <script src="js/cliente.js"></script>
 <script src="js/captura.js"></script>

@@ -53,7 +53,7 @@ class PanelBms {
 
   pintar(t) {
     const { soc, corriente, temperatura, celdas } = t.bms;
-    const nivel = soc === null ? "sin-dato" : soc > CONFIG.SOC_MEDIO ? "ok" : soc > CONFIG.SOC_BAJO ? "warn" : "hot";
+    const nivel = soc === null ? "sin-dato" : soc > umbrales.get("SOC_MEDIO") ? "ok" : soc > umbrales.get("SOC_BAJO") ? "warn" : "hot";
 
     setTexto($("bmsSoc"), formatear(soc, 0));
     const medidor = $("bmsMedidor");
